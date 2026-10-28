@@ -1,0 +1,77 @@
+{
+  "name": "示例词表",
+  "words": [
+    {
+      "id": "example_0",
+      "word": "apple",
+      "meaning": "苹果",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_1",
+      "word": "banana",
+      "meaning": "香蕉",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_2",
+      "word": "watermelon",
+      "meaning": "西瓜",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_3",
+      "word": "helicopter",
+      "meaning": "直升机",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_4",
+      "word": "hippopotamus",
+      "meaning": "河马",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_5",
+      "word": "library",
+      "meaning": "图书馆",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_6",
+      "word": "computer",
+      "meaning": "电脑",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    },
+    {
+      "id": "example_7",
+      "word": "umbrella",
+      "meaning": "雨伞",
+      "group": "示例词表",
+      "phonetic": "",
+      "syllables": "",
+      "note": ""
+    }
+  ]
+}

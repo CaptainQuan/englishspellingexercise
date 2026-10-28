@@ -1,0 +1,2323 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>单词拼写练习</title>
+  <style>
+    :root {
+      --ink: #17202a;
+      --muted: #637083;
+      --line: #d9e2ec;
+      --paper: #fbfcfe;
+      --panel: #ffffff;
+      --teal: #197278;
+      --teal-soft: #e3f3f2;
+      --gold: #b7791f;
+      --gold-soft: #fff4d6;
+      --red: #c2413b;
+      --red-soft: #fde8e6;
+      --green: #18794e;
+      --green-soft: #e7f6ee;
+      --blue: #2767b1;
+      --blue-soft: #e8f1fb;
+      --letter-cell-width: 42px;
+      --letter-cell-height: 50px;
+      --shadow: 0 18px 45px rgba(23, 32, 42, .08);
+      font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(25, 114, 120, .08), transparent 260px),
+        linear-gradient(90deg, rgba(39, 103, 177, .05), transparent 55%),
+        var(--paper);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      color: #fff;
+      background: var(--teal);
+      transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(25, 114, 120, .18); }
+    button:disabled { cursor: not-allowed; opacity: .45; transform: none; box-shadow: none; }
+    button.secondary { color: var(--teal); background: var(--teal-soft); border-color: #b9dddb; }
+    button.warning { color: #7a4d09; background: var(--gold-soft); border-color: #f1d38a; }
+    button.danger { color: var(--red); background: var(--red-soft); border-color: #f4b6b2; }
+
+    .app {
+      width: min(1220px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 42px;
+    }
+
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 10px 0 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(86px, 1fr));
+      gap: 10px;
+      min-width: min(470px, 100%);
+    }
+
+    .stat {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .82);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .library-panel {
+      display: none;
+    }
+
+    .library-panel.open {
+      display: block;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .92);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-body { padding: 20px; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .65);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .toolbar .spacer { flex: 1; }
+
+    .mode {
+      display: inline-flex;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f6f8fb;
+    }
+
+    .mode button {
+      padding: 7px 11px;
+      color: var(--muted);
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .mode button.active {
+      color: #fff;
+      background: var(--blue);
+    }
+
+    .unit-filter {
+      width: min(320px, 100%);
+      min-height: 42px;
+    }
+
+    .manage-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid #b9dddb;
+      border-radius: 8px;
+      color: var(--teal);
+      background: var(--teal-soft);
+      text-decoration: none;
+    }
+
+    .prompt-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .meaning {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .tagline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: #f2f5f8;
+      border: 1px solid var(--line);
+      font-size: 14px;
+    }
+
+    .phonetic {
+      color: var(--blue);
+      background: var(--blue-soft);
+      border-color: #b9d0ed;
+    }
+
+    .syllable {
+      color: var(--gold);
+      background: var(--gold-soft);
+      border-color: #edd28f;
+    }
+
+    .learning-panel {
+      margin: 24px 0 12px;
+      padding: 18px;
+      border: 1px solid #b9d0ed;
+      border-radius: 8px;
+      background: #f7fbff;
+    }
+
+    .learning-step {
+      margin: 0 0 8px;
+      color: var(--blue);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .learning-content {
+      margin: 0;
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1.5;
+    }
+
+    .learning-spelling {
+      display: inline-block;
+      margin-top: 4px;
+      color: var(--gold);
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .word-shape {
+      margin: 28px 0 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .word-shape.compare {
+      align-items: flex-start;
+      row-gap: 10px;
+    }
+
+    .word-shape.compare .syllable-divider {
+      margin-top: calc(var(--letter-cell-height) + 8px);
+    }
+
+    .syllable-group {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .syllable-pair {
+      display: grid;
+      gap: 7px;
+    }
+
+    .syllable-row {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .annotation-row {
+      display: grid;
+      grid-auto-rows: minmax(22px, auto);
+      gap: 4px 8px;
+      align-items: start;
+      font-size: 13px;
+      line-height: 1.35;
+      color: var(--red);
+    }
+
+    .letter-note {
+      width: max-content;
+      max-width: 180px;
+      padding-top: 2px;
+      white-space: normal;
+      font-size: 12px;
+    }
+
+    .syllable-divider {
+      color: var(--gold);
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .letter-cell {
+      width: var(--letter-cell-width);
+      height: var(--letter-cell-height);
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-bottom-width: 3px;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+
+    .letter-cell.space {
+      width: 22px;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .letter-cell.pending { background: #fff; }
+    .letter-cell.answer { color: var(--blue); background: var(--blue-soft); border-color: #b9d0ed; }
+    .letter-cell.good { color: var(--green); background: var(--green-soft); border-color: #a9d9bf; }
+    .letter-cell.bad { color: var(--red); background: var(--red-soft); border-color: #eba7a2; }
+    .letter-cell.extra { color: var(--red); background: #fff3f2; border-style: dashed; }
+    .letter-cell.next { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(39, 103, 177, .13); }
+
+    .answer-input {
+      width: 100%;
+      min-height: 58px;
+      margin-top: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font-size: 24px;
+      letter-spacing: 2px;
+      outline: none;
+      background: #fff;
+    }
+
+    .answer-input:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px rgba(39, 103, 177, .12);
+    }
+
+    .feedback {
+      min-height: 52px;
+      margin-top: 12px;
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: #f7f9fb;
+      line-height: 1.55;
+      white-space: pre-line;
+    }
+
+    .feedback.good {
+      color: var(--green);
+      background: var(--green-soft);
+      border-color: #afdcbc;
+    }
+
+    .feedback.bad {
+      color: var(--red);
+      background: var(--red-soft);
+      border-color: #ebb0ab;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .75);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tabs button {
+      flex: 1;
+      color: var(--muted);
+      background: #f5f7fa;
+      border-color: var(--line);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .tabs button.active {
+      color: #fff;
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+
+    .tab-page { display: none; }
+    .tab-page.active { display: block; }
+
+    label {
+      display: block;
+      margin: 12px 0 7px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: #fff;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+      max-height: 460px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .item {
+      display: grid;
+      gap: 5px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .item-head {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item strong {
+      word-break: break-word;
+      font-size: 17px;
+    }
+
+    .item small {
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .item-actions button {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    .empty {
+      padding: 22px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      background: #fbfcfe;
+    }
+
+    .import-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .import-row button { flex: 1; min-width: 120px; }
+    .hidden { display: none; }
+
+    .word-shape { overflow-x: auto; }
+    .syllable-pair { flex-shrink: 0; }
+
+    @media (max-width: 920px) {
+      header, .prompt-row { display: block; }
+      .stats { margin-top: 16px; min-width: 0; grid-template-columns: repeat(2, 1fr); }
+      .layout { grid-template-columns: 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .app { width: min(100% - 20px, 1220px); padding-top: 12px; }
+      h1 { font-size: 24px; }
+      .meaning { font-size: 22px; }
+      :root { --letter-cell-width: 34px; --letter-cell-height: 42px; }
+      .letter-cell { font-size: 18px; }
+      .answer-input { font-size: 20px; }
+      .toolbar { align-items: stretch; }
+      .toolbar > * { width: 100%; }
+    }
+  
+    .daily-card {background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px;scroll-margin-top:16px;}
+    .daily-heading,.daily-meta {display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+    .daily-heading h2 {margin:5px 0 16px;font-size:24px;}.daily-kicker{font-size:11px;letter-spacing:2px;color:var(--blue);font-weight:700;}
+    .daily-meta {font-size:14px;color:var(--muted);}.daily-meta label{display:flex;align-items:center;gap:12px;margin:0;}.daily-meta input{width:250px;max-width:65vw;}
+    .daily-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:22px 0 12px;}.daily-grid>div{background:#f5f8fc;border-radius:9px;padding:16px 10px;text-align:center;}.daily-grid strong{display:block;font-size:24px;color:var(--blue);}.daily-grid span{display:block;margin-top:8px;font-size:12px;color:var(--muted);}.daily-note{font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:0;}
+    #resetStatsBtn,.tabBtn[data-tab="add"]{display:none;}
+    @media(max-width:650px){.daily-card{padding:16px;}.daily-grid{grid-template-columns:repeat(2,1fr);}.daily-grid>div:last-child{grid-column:1/-1;}.daily-grid strong{font-size:21px;}.daily-heading h2{font-size:21px;}}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>单词拼写练习</h1>
+        <div class="subtitle">学习位置自动保存，下次打开接着上次的单词。</div>
+
+      </div>
+      <div class="stats" aria-label="练习统计">
+        <div class="stat"><strong id="totalWords">0</strong><span>词库单词</span></div>
+        <div class="stat"><strong id="doneCount">0</strong><span>今日完成</span></div>
+        <div class="stat"><strong id="rightRate">0%</strong><span>累计首次正确率</span></div>
+        <div class="stat" title="每次重新出题只统计首次提交"><strong id="reviewRate">—</strong><span>累计复习正确率</span></div>
+        <div class="stat" title="连续三次独立答对；再次答错或看答案会取消"><strong id="masteredCount">0</strong><span>已掌握词数</span></div>
+        <div class="stat"><strong id="wrongCount">0</strong><span>错词数量</span></div>
+      </div>
+    </header>
+
+
+    <section class="daily-card" aria-label="今日学习记录" id="dailyCard">
+  <div class="daily-heading"><div><span class="daily-kicker">DAILY PRACTICE</span><h2>今日学习记录</h2></div><span id="dailyDate"></span></div>
+  <div class="daily-meta"><label>姓名 <input id="studentName" maxlength="30" placeholder="填写姓名，截图交给老师" autocomplete="name"></label><span>统计词表：<span id="dailyGroup"></span></span></div>
+  <div class="daily-grid"><div><strong id="dailyWords">0</strong><span>今日练习词数</span></div><div><strong id="dailyAttempts">0</strong><span>今日作答题次</span></div><div><strong id="dailyFirst">—</strong><span>首次独立正确</span></div><div><strong id="dailyReview">—</strong><span>复习独立正确</span></div><div><strong id="dailyAssisted">0</strong><span>辅助练习题次</span></div></div>
+  <p class="daily-note">每天凌晨 4 点换日（设备当地时间）。同题重试不重复计数；看答案后的作答单独统计。填写姓名后可直接截图。</p>
+</section><main class="layout">
+      <section class="panel" aria-label="拼写练习">
+        <div class="toolbar">
+          <div class="mode" aria-label="练习顺序">
+            <button id="modeQueue" class="active" type="button">顺序</button>
+            <button id="modeReverse" type="button" title="从当前词表最后一个词向前练习">倒序</button>
+            <button id="modeWrong" type="button">复习</button>
+            <button id="modeRandom" type="button">随机</button>
+            <button id="modeLearn" type="button">学习</button>
+          </div>
+          <select id="groupFilter" class="unit-filter" aria-label="选择单词表或课程单元"></select>
+          <div class="spacer"></div>
+          <button id="wrongBookBtn" class="manage-link" type="button">复习队列</button>
+          <button class="secondary" type="button" id="loadListBtn">加载新词表</button><button class="secondary" type="button" id="reportOpen">今日学习记录</button>
+          <button id="resetStatsBtn" class="warning" type="button">计数清零</button>
+          <button id="speakBtn" class="secondary" type="button">播放读音</button>
+          <button id="nextBtn" type="button">下一词</button>
+        </div>
+
+        <div class="panel-body">
+          <div class="prompt-row">
+            <div>
+              <p id="meaning" class="meaning">请先添加或导入单词</p>
+              <div class="tagline">
+                <span id="phoneticTag" class="tag phonetic">音标：-</span>
+                <span id="syllableRuleTag" class="tag syllable">普通规则</span>
+                <span id="levelTag" class="tag">分组：留学预备</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="learningPanel" class="learning-panel" hidden>
+            <p id="learningStep" class="learning-step"></p>
+            <p id="learningContent" class="learning-content"></p>
+            <div class="actions">
+              <button id="learningNextBtn" type="button">下一步</button>
+            </div>
+          </div>
+          <div id="wordShape" class="word-shape" aria-label="逐字母校验"></div>
+          <div id="feedback" class="feedback">输入完成后点击“检查答案”，再逐个字母对照。</div>
+          <input id="answerInput" class="answer-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="在这里输入英文拼写">
+
+          <div id="practiceActions" class="actions">
+            <button id="checkBtn" type="button">检查答案</button>
+            <button id="retryBtn" class="warning" type="button">重新拼写</button>
+            <button id="revealBtn" class="secondary" type="button">显示答案</button>
+            <button id="markWrongBtn" class="danger" type="button">加入错词本</button>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel library-panel" aria-label="词库管理">
+        <div class="tabs">
+          <button class="tabBtn active" data-tab="library" type="button">词库</button>
+          <button class="tabBtn" data-tab="add" type="button">添加</button>
+          <button class="tabBtn" data-tab="wrong" type="button">复习</button>
+        </div>
+
+        <div class="panel-body">
+          <div id="libraryTab" class="tab-page active">
+            <input id="searchInput" placeholder="搜索英文、中文或分组">
+            <p style="font-size:12px;color:var(--muted)">加载 JSON、CSV 或制表符分隔的 TXT/TSV 词表。CSV 表头：word,meaning,group（英文、中文释义、词表名）。Word 文件需先整理为上述格式。</p><div class="import-row">
+              <button id="exportBtn" class="secondary" type="button">导出备份</button>
+              <button id="importBtn" class="secondary" type="button">加载词表 / 备份</button>
+              <input id="importFile" class="hidden" type="file" accept=".json,.txt,.csv,.tsv">
+            </div>
+            <div id="wordList" class="list"></div>
+          </div>
+
+          <div id="addTab" class="tab-page">
+            <form id="wordForm">
+              <label for="wordInput">英文单词或短语</label>
+              <input id="wordInput" required placeholder="例如 application">
+
+              <label for="meaningInput">中文提示</label>
+              <textarea id="meaningInput" required placeholder="例如 申请；申请表"></textarea>
+
+              <div class="form-grid">
+                <div>
+                  <label for="phoneticInput">音标</label>
+                  <input id="phoneticInput" placeholder="例如 /ˌæplɪˈkeɪʃn/">
+                </div>
+                <div>
+                  <label for="groupInput">分组</label>
+                  <input id="groupInput" placeholder="例如 Unit 1">
+                </div>
+              </div>
+
+              <label for="syllableInput">音节划分</label>
+              <input id="syllableInput" placeholder="例如 ap-pli-ca-tion；留空会自动粗略划分">
+
+              <label for="noteInput">课堂提示</label>
+              <textarea id="noteInput" placeholder="例如 注意 double consonant、词根、易错点"></textarea>
+
+              <div class="actions">
+                <button type="submit">保存单词</button>
+                <button id="clearFormBtn" class="secondary" type="button">清空</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="wrongTab" class="tab-page">
+            <div class="actions" style="margin-top: 0;">
+              <button id="practiceWrongBtn" type="button">开始复习</button>
+              <button id="clearWrongBtn" class="danger" type="button">清空复习队列</button>
+            </div>
+            <div id="wrongList" class="list"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+<script>window.IMPORTED_VOCAB = [{"id":"example_0","word":"apple","meaning":"苹果","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_1","word":"banana","meaning":"香蕉","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_2","word":"watermelon","meaning":"西瓜","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_3","word":"helicopter","meaning":"直升机","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_4","word":"hippopotamus","meaning":"河马","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_5","word":"library","meaning":"图书馆","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_6","word":"computer","meaning":"电脑","group":"示例词表","phonetic":"","syllables":"","note":""},{"id":"example_7","word":"umbrella","meaning":"雨伞","group":"示例词表","phonetic":"","syllables":"","note":""}];</script>
+<script>/* Shared data layer. Built-in word lists stay in JS files; localStorage stores edits only. */
+(function (root) {
+  'use strict';
+  const LEGACY_KEY = 'spelling_public_words_v1';
+  const WORD_KEY = 'spelling_public_edits_v2';
+  const STATE_KEY = 'spelling_public_state_v1';
+  const tableOrder = ['示例词表'];
+  const text = value => String(value == null ? '' : value).trim().replace(/\s+/g, ' ');
+  const comparable = value => text(value).toLowerCase();
+  const keyOf = item => JSON.stringify([comparable(item.word), comparable(item.group)]);
+  function hash(value) {
+    let n = 2166136261;
+    for (const char of value) n = Math.imul(n ^ char.charCodeAt(0), 16777619);
+    return (n >>> 0).toString(36);
+  }
+  function clean(item) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error('词条必须是对象。');
+    const result = {
+      ...item,
+      word: text(item.word || item.en || item.english || item.term),
+      meaning: text(item.meaning || item.cn || item.chinese || item.definition),
+      phonetic: text(item.phonetic || item.pronunciation || item.ipa),
+      syllables: text(item.syllables || item.syllable || item.breakdown),
+      group: text(item.group || item.unit || item.category || '自建分组'),
+      note: text(item.note || item.tip || item.memo)
+    };
+    result.id = text(item.id) || 'auto_' + hash(keyOf(result));
+    return result;
+  }
+  function signature(item) {
+    return JSON.stringify(Object.keys(item).sort().map(key => [key, item[key]]));
+  }
+  function csvRows(content) {
+    const rows = []; let row = [], field = '', quoted = false;
+    for (let i = 0; i < content.length; i++) {
+      const c = content[i];
+      if (c === '"') {
+        if (quoted && content[i + 1] === '"') { field += '"'; i++; }
+        else quoted = !quoted;
+      } else if (c === ',' && !quoted) { row.push(field); field = ''; }
+      else if ((c === '\n' || c === '\r') && !quoted) {
+        if (c === '\r' && content[i + 1] === '\n') i++;
+        row.push(field); if (row.some(value => value.trim())) rows.push(row);
+        row = []; field = '';
+      } else field += c;
+    }
+    if (quoted) throw new Error('CSV 引号没有闭合。');
+    row.push(field); if (row.some(value => value.trim())) rows.push(row);
+    return rows;
+  }
+  function parse(content, filename) {
+    content = String(content).replace(/^\uFEFF/, '').trim();
+    let payload;
+    if (String(filename).toLowerCase().endsWith('.csv')) {
+      const data = csvRows(content);
+      const fields = ['word', 'meaning', 'phonetic', 'syllables', 'group', 'note'];
+      let headers = fields;
+      if (data.length && /^(word|英文|单词)$/i.test(text(data[0][0]))) headers = data.shift().map(x => text(x));
+      const aliases = {'英文':'word','单词':'word','中文':'meaning','中文释义':'meaning','释义':'meaning','词表':'group','词表名':'group','分组':'group','音标':'phonetic','音节':'syllables','备注':'note'};
+      payload = {words: data.map(row => Object.fromEntries(headers.map((h, i) => [aliases[h] || h, row[i] || ''])))};
+    } else if (!content.startsWith('{') && !content.startsWith('[') && content.includes('\t')) {
+      payload = {words: content.split(/\r?\n/).filter(Boolean).map(line => {
+        const [word, phonetic, ...meaning] = line.split('\t');
+        return {word, phonetic, meaning: meaning.join('\t'), group: '导入词表'};
+      })};
+    } else payload = JSON.parse(content);
+    const list = Array.isArray(payload) ? payload : payload.words || payload.vocab;
+    if (!Array.isArray(list) || !list.length) throw new Error('没有识别到词条。');
+    const words = list.map(clean);
+    if (words.some(item => !item.word)) throw new Error('文件包含空英文词条，请检查后重试。');
+    if (new Set(words.map(x => x.id)).size !== words.length) throw new Error('文件中有重复词条 ID，请先处理重复记录。');
+    const isBackup = !Array.isArray(payload) && (payload.kind === 'backup' || Boolean(payload.state));
+    return {words, state: isBackup && payload.state ? payload.state : null, isBackup};
+  }
+  function merge(current, imported) {
+    const result = current.slice();
+    const byId = new Map(result.map((item, i) => [item.id, i]));
+    const byKey = new Map(result.map((item, i) => [keyOf(item), i]));
+    for (const item of imported) {
+      let index = byId.get(item.id);
+      if (index === undefined && item.id.startsWith('auto_')) index = byKey.get(keyOf(item));
+      if (index === undefined) {
+        index = result.length; result.push(item);
+      } else result[index] = {...result[index], ...item, id: result[index].id};
+      byId.set(result[index].id, index); byKey.set(keyOf(result[index]), index);
+    }
+    return result;
+  }
+  function create(seedInput, storage = root.localStorage) {
+    const seeds = seedInput.map(clean);
+    const byId = new Map(seeds.map(item => [item.id, item]));
+    if (byId.size !== seeds.length) throw new Error('默认词库存在重复 ID。');
+    const signatures = new Map(seeds.map(item => [item.id, signature(item)]));
+    let lastWritten = null;
+    function read(key) {
+      const value = storage.getItem(key);
+      return value ? JSON.parse(value) : null;
+    }
+    function upgradeDefaults(item) {
+      const result = clean(item);
+      const seed = byId.get(result.id);
+      const previous = (root.VOCAB_SEED_PREVIOUS_VALUES || {})[result.id];
+      const legacyPrevious = (root.VOCAB_SEED_PREVIOUS_FIELDS || {})[result.id];
+      // Whole-record edits can retain defaults from more than one seed release.
+      // Upgrade only known old default values, leaving personal edits intact.
+      if (seed && previous) {
+        for (const [key, values] of Object.entries(previous)) {
+          if (values.includes(result[key])) result[key] = seed[key];
+        }
+      } else if (seed && legacyPrevious) {
+        for (const [key, value] of Object.entries(legacyPrevious)) {
+          if (result[key] === value) result[key] = seed[key];
+        }
+      }
+      return result;
+    }
+    function load() {
+      const saved = read(WORD_KEY);
+      if (saved && saved.version === 2) {
+        const deleted = new Set(saved.deletedIds || []);
+        const overrides = (saved.overrides || []).map(upgradeDefaults);
+        return merge(seeds.filter(item => !deleted.has(item.id)), overrides);
+      }
+      // Migrate legacy edits without copying the enlarged built-in library into storage.
+      const legacy = read(LEGACY_KEY);
+      if (!Array.isArray(legacy) || !legacy.length) return seeds.slice();
+      const migrated = legacy.filter(item => item && item.word).map(item => {
+        const base = byId.get(String(item.id));
+        return upgradeDefaults(base ? {...base, ...item} : item);
+      });
+      return merge(seeds, migrated);
+    }
+    function save(words, state) {
+      const ids = new Set(words.map(item => item.id));
+      const payload = {
+        version: 2,
+        overrides: words.filter(item => signatures.get(item.id) !== signature(item)),
+        deletedIds: seeds.filter(item => !ids.has(item.id)).map(item => item.id)
+      };
+      const serialized = JSON.stringify(payload);
+      // Persist words before state so a failed edit cannot silently destroy learning state.
+      if (serialized !== lastWritten) { storage.setItem(WORD_KEY, serialized); lastWritten = serialized; }
+      storage.setItem(STATE_KEY, JSON.stringify(state));
+    }
+    return {load, save, seeds};
+  }
+  root.VocabStore = {create, clean, parse, merge, keyOf, tableOrder, WORD_KEY, STATE_KEY};
+})(window);
+</script>
+  <script>
+    const STORE_KEY = "spelling_public_words_v1";
+    const STATE_KEY = "spelling_public_state_v1";
+
+    const seedWords = window.IMPORTED_VOCAB;
+    const wordStore = window.VocabStore.create(seedWords);
+    let storageReadable = true;
+    let words = loadWords();
+    let state = loadState();
+    let currentIndex = 0;
+    let mode = "queue";
+    let selectedGroup = state.lastGroup || "示例词表";
+    let completedCurrent = false;
+    let answerChecked = false;
+    let autoNextTimer = null;
+    let activeReviewId = null;
+    let learningStep = 0;
+    const REVIEW_GAP = 3;
+
+    const els = {
+      totalWords: document.getElementById("totalWords"),
+      doneCount: document.getElementById("doneCount"),
+      rightRate: document.getElementById("rightRate"),
+      wrongCount: document.getElementById("wrongCount"),
+      meaning: document.getElementById("meaning"),
+      phoneticTag: document.getElementById("phoneticTag"),
+      syllableRuleTag: document.getElementById("syllableRuleTag"),
+      levelTag: document.getElementById("levelTag"),
+      wordShape: document.getElementById("wordShape"),
+      answerInput: document.getElementById("answerInput"),
+      feedback: document.getElementById("feedback"),
+      learningPanel: document.getElementById("learningPanel"),
+      learningStep: document.getElementById("learningStep"),
+      learningContent: document.getElementById("learningContent"),
+      learningNextBtn: document.getElementById("learningNextBtn"),
+      practiceActions: document.getElementById("practiceActions"),
+      groupFilter: document.getElementById("groupFilter"),
+      wordList: document.getElementById("wordList"),
+      wrongList: document.getElementById("wrongList"),
+      searchInput: document.getElementById("searchInput"),
+      importFile: document.getElementById("importFile")
+    };
+
+    function uid() {
+      return "w_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function normalizeWord(raw) {
+      return String(raw || "").trim().replace(/\s+/g, " ");
+    }
+
+    function comparable(raw) {
+      return normalizeWord(raw).toLowerCase();
+    }
+
+    function loadWords() {
+      try { return wordStore.load(); }
+      catch (error) {
+        storageReadable = false;
+        alert("无法读取本地词库，暂以默认词库浏览，本次不会覆盖原数据。请先导出备份并检查浏览器存储。\n" + error.message);
+        return seedWords.map(cleanWord);
+      }
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STATE_KEY) || "null");
+        if (saved) return {
+          ...saved,
+          done: Number(saved.done) || 0,
+          attempts: Number(saved.attempts) || 0,
+          correct: Number(saved.correct) || 0,
+          wrongIds: Array.isArray(saved.wrongIds) ? saved.wrongIds : [],
+          wordStats: saved.wordStats || {},
+          scoreById: saved.scoreById || {},
+          today: normalizeTodayState(saved.today),
+          lastGroup: String(saved.lastGroup || ""),
+          reviewQueue: normalizeReviewQueue(saved.reviewQueue),
+          reviewProgress: Number(saved.reviewProgress) || 0
+        };
+      } catch (error) {}
+      return { done: 0, attempts: 0, correct: 0, wrongIds: [], wordStats: {}, scoreById: {}, today: normalizeTodayState(), lastGroup: "", reviewQueue: [], reviewProgress: 0 };
+    }
+
+    function normalizeReviewQueue(raw) {
+      if (!Array.isArray(raw)) return [];
+      return raw.map(item => ({
+        id: String(item && item.id || ""),
+        dueAt: Number(item && item.dueAt) || 0
+      })).filter(item => item.id);
+    }
+
+    function todayKey(date = new Date()) {
+      const shifted = new Date(date.getTime() - 4 * 60 * 60 * 1000);
+      const year = shifted.getFullYear();
+      const month = String(shifted.getMonth() + 1).padStart(2, "0");
+      const day = String(shifted.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function normalizeTodayState(raw) {
+      const key = todayKey();
+      const records = raw && raw.key === key && Array.isArray(raw.records) ? raw.records : [];
+      return { key, records };
+    }
+
+    function ensureTodayState() {
+      const key = todayKey();
+      if (!state.today || state.today.key !== key || !Array.isArray(state.today.records)) {
+        state.today = { key, records: [] };
+      }
+      return state.today;
+    }
+
+    function recordTodayCompletion(type, id) {
+      const today = ensureTodayState();
+      const recordKey = `${type}:${id}`;
+      if (!today.records.includes(recordKey)) today.records.push(recordKey);
+    }
+
+    function cleanWord(item) {
+      return window.VocabStore.clean(item);
+    }
+
+    // Keep the ordinary queue position as well as an interleaved review word.
+    // Word IDs remain stable when a word list is reordered or updated.
+    function capturePracticePosition() {
+      const pool = getPool();
+      const index = pool.length ? currentIndex % pool.length : 0;
+      state.lastGroup = selectedGroup === "all" ? "" : selectedGroup;
+      state.practiceSession = {
+        version: 1,
+        group: selectedGroup,
+        mode,
+        index,
+        wordId: pool[index] ? pool[index].id : null,
+        activeReviewId,
+        learningStep: mode === "learn" ? learningStep : 0
+      };
+    }
+
+    function restorePracticePosition() {
+      const saved = state.practiceSession;
+      if (!saved || saved.version !== 1) return;
+      selectedGroup = saved.group === "all" || words.some(item => item.group === saved.group)
+        ? saved.group : "all";
+      mode = ["queue", "reverse", "wrong", "random", "learn"].includes(saved.mode) ? saved.mode : "queue";
+      activeReviewId = null;
+      if (mode === "wrong" && !getPool().length) mode = "queue";
+      if (mode === "random" && (!state.randomSession || state.randomSession.version !== 1
+          || state.randomSession.group !== selectedGroup || !Array.isArray(state.randomSession.ids))) {
+        // Upgrade old random-start sessions while retaining the displayed word.
+        startRandomRound();
+        const found = state.randomSession.ids.indexOf(saved.wordId);
+        if (found >= 0) {
+          [state.randomSession.ids[0], state.randomSession.ids[found]] =
+            [state.randomSession.ids[found], state.randomSession.ids[0]];
+        }
+      }
+      const pool = getPool();
+      const found = pool.findIndex(item => item.id === saved.wordId);
+      const fallback = Number.isSafeInteger(saved.index) && saved.index >= 0 ? saved.index : 0;
+      currentIndex = found >= 0 ? found : (pool.length ? fallback % pool.length : 0);
+      if (mode !== "wrong" && pool.some(item => item.id === saved.activeReviewId)) {
+        activeReviewId = saved.activeReviewId;
+      }
+      const current = currentWord();
+      const sameWord = current && current.id === (saved.activeReviewId || saved.wordId);
+      learningStep = mode === "learn" && sameWord && Number.isInteger(saved.learningStep)
+        ? Math.max(0, Math.min(3, saved.learningStep)) : 0;
+      // A missing/replaced word starts a fresh trial without changing past scores.
+      if (!sameWord && state.metricsV3) state.metricsV3.trial = null;
+    }
+
+    function saveAll() {
+      if (!storageReadable) { throw new Error("本地存储不可读，本次修改未保存。请导出备份。"); }
+      capturePracticePosition();
+      try { wordStore.save(words, state); }
+      catch (error) { alert("保存失败，请立即导出备份。\n" + error.message); throw error; }
+    }
+
+    function currentWord() {
+      if (!words.length) return null;
+      if (activeReviewId) {
+        const reviewWord = words.find(item => item.id === activeReviewId);
+        if (reviewWord) return reviewWord;
+        activeReviewId = null;
+      }
+      const pool = getPool();
+      if (!pool.length) return null;
+      return pool[currentIndex % pool.length];
+    }
+
+    function groupSortValue(group) {
+      const text = String(group || "");
+      const tableIndex = window.VocabStore.tableOrder.indexOf(text);
+      if (tableIndex >= 0) return { book: -10 + tableIndex, course: 0, unit: 0, text };
+      const bookMatch = text.match(/\bBOOK(\d+)\b/i);
+      const unitMatch = text.match(/\bU(\d+)\b/i);
+      const course = text.startsWith("听说") ? 0 : text.startsWith("读写") ? 1 : 9;
+      return {
+        book: bookMatch ? Number(bookMatch[1]) : 999,
+        course,
+        unit: unitMatch ? Number(unitMatch[1]) : 999,
+        text
+      };
+    }
+
+    function compareGroups(a, b) {
+      const left = groupSortValue(a);
+      const right = groupSortValue(b);
+      return left.book - right.book
+        || left.course - right.course
+        || left.unit - right.unit
+        || left.text.localeCompare(right.text, "zh-CN");
+    }
+
+    function shuffleIds(ids, avoidFirstId = null) {
+      const shuffled = ids.slice();
+      // Fisher-Yates: every position in the round is shuffled, not only its start.
+      for (let index = shuffled.length - 1; index > 0; index -= 1) {
+        const other = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+      }
+      if (shuffled.length > 1 && shuffled[0] === avoidFirstId) {
+        const other = 1 + Math.floor(Math.random() * (shuffled.length - 1));
+        [shuffled[0], shuffled[other]] = [shuffled[other], shuffled[0]];
+      }
+      return shuffled;
+    }
+
+    function startRandomRound(avoidFirstId = null) {
+      const scoped = selectedGroup === "all" ? words : words.filter(item => item.group === selectedGroup);
+      state.randomSession = {
+        version: 1,
+        group: selectedGroup,
+        ids: shuffleIds(scoped.map(item => item.id), avoidFirstId)
+      };
+      currentIndex = 0;
+    }
+
+    function randomPool(scopedWords) {
+      const saved = state.randomSession;
+      if (!saved || saved.version !== 1 || saved.group !== selectedGroup || !Array.isArray(saved.ids)) {
+        startRandomRound();
+      }
+      const byId = new Map(scopedWords.map(item => [item.id, item]));
+      const seen = new Set();
+      const ids = state.randomSession.ids.filter(id => {
+        if (!byId.has(id) || seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+      // Keep the current round when a word list is reordered or expanded.
+      const added = scopedWords.filter(item => !seen.has(item.id)).map(item => item.id);
+      if (added.length || ids.length !== state.randomSession.ids.length) {
+        state.randomSession.ids = ids.concat(shuffleIds(added));
+      }
+      return state.randomSession.ids.map(id => byId.get(id));
+    }
+
+    function getPool() {
+      const scopedWords = selectedGroup === "all"
+        ? words
+        : words.filter(item => item.group === selectedGroup);
+      if (mode === "wrong") {
+        const ids = wrongIdSet();
+        return scopedWords.filter(item => ids.has(item.id));
+      }
+      return mode === "random" ? randomPool(scopedWords) : mode === "reverse" ? scopedWords.slice().reverse() : scopedWords;
+    }
+
+    function isReviewCurrent(item = currentWord()) {
+      return Boolean(item && (mode === "wrong" || activeReviewId === item.id));
+    }
+
+    function queueReview(id, delay = REVIEW_GAP) {
+      if (!id) return;
+      if (!Array.isArray(state.reviewQueue)) state.reviewQueue = [];
+      // The current word is not counted in the gap, so it returns after three other words.
+      const dueAt = (Number(state.reviewProgress) || 0) + delay + 1;
+      const existing = state.reviewQueue.find(entry => entry.id === id);
+      if (existing) existing.dueAt = activeReviewId === id ? dueAt : Math.min(existing.dueAt, dueAt);
+      else state.reviewQueue.push({ id, dueAt });
+    }
+
+    function removeFromReviewQueue(id) {
+      state.reviewQueue = (state.reviewQueue || []).filter(entry => entry.id !== id);
+    }
+
+    function dueReviewId() {
+      const scopedIds = new Set(getPool().map(item => item.id));
+      const due = (state.reviewQueue || [])
+        .filter(entry => scopedIds.has(entry.id) && entry.dueAt <= (Number(state.reviewProgress) || 0))
+        .sort((a, b) => a.dueAt - b.dueAt);
+      return due.length ? due[0].id : null;
+    }
+
+    function wrongIdSet() {
+      const existing = new Set(words.map(item => item.id));
+      return new Set((state.wrongIds || []).filter(id => existing.has(id)));
+    }
+
+    function metrics() {
+      if (!state.metricsV3) {
+        // Old scores mix assisted and independent answers; preserve, never reinterpret them.
+        state.metricsV3 = {events: [], seen: {}, streaks: {}, trial: null,
+          legacy: {attempts: state.attempts || 0, correct: state.correct || 0,
+            scoreById: JSON.parse(JSON.stringify(state.scoreById || {})),
+            wordStats: JSON.parse(JSON.stringify(state.wordStats || {}))}};
+        Object.entries(state.scoreById || {}).forEach(([id, score]) => {
+          state.metricsV3.seen[id] = true;
+          if (score.initial === "wrong" && !score.corrected && !state.wrongIds.includes(id)) state.wrongIds.push(id);
+        });
+        Object.keys(state.wordStats || {}).forEach(id => { state.metricsV3.seen[id] = true; });
+      }
+      return state.metricsV3;
+    }
+
+    function trialFor(item) {
+      const m = metrics();
+      if (!m.trial || m.trial.id !== item.id) {
+        m.trial = {id: item.id, submitted: false, assisted: mode === "learn",
+          kind: m.seen[item.id] || isReviewCurrent(item) ? "review" : "initial"};
+      }
+      if (mode === "learn") m.trial.assisted = true;
+      return m.trial;
+    }
+
+    function assistCurrent(item) {
+      const m = metrics(), trial = trialFor(item);
+      trial.assisted = true;
+      m.seen[item.id] = true;
+      m.streaks[item.id] = 0;
+    }
+
+    function recordAttempt(item, exact) {
+      const m = metrics(), trial = trialFor(item);
+      if (trial.submitted) return false;
+      const kind = trial.assisted ? "assisted" : trial.kind;
+      m.events.push([item.id, Date.now(), kind, exact ? 1 : 0]);
+      trial.submitted = true;
+      m.seen[item.id] = true;
+      m.streaks[item.id] = kind !== "assisted" && exact ? (m.streaks[item.id] || 0) + 1 : 0;
+      if (kind !== "assisted") bumpWordStat(item.id, exact ? "right" : "wrong");
+      return kind !== "assisted" && exact;
+    }
+
+    function renderGroupFilter() {
+      const groups = Array.from(new Set(words.map(item => item.group || "未分组"))).sort(compareGroups);
+      if (selectedGroup !== "all" && !groups.includes(selectedGroup)) {
+        selectedGroup = "all";
+        state.lastGroup = "";
+      }
+      els.groupFilter.innerHTML = "";
+      const all = document.createElement("option");
+      all.value = "all";
+      all.textContent = "全部词表 / 单元";
+      els.groupFilter.appendChild(all);
+      groups.forEach(group => {
+        const option = document.createElement("option");
+        option.value = group;
+        option.textContent = group + "（" + words.filter(item => item.group === group).length + "）";
+        els.groupFilter.appendChild(option);
+      });
+      els.groupFilter.value = selectedGroup;
+    }
+
+    function normalizedSyllables(value) {
+      return String(value || "")
+        .toLowerCase()
+        .replace(/-/g, "/")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function isPronunciationException(item) {
+      const actual = normalizedSyllables(item && item.syllables);
+      const byRule = normalizedSyllables(roughSyllables(item && item.word));
+      return Boolean(actual && byRule && actual !== byRule);
+    }
+
+    function syllableRuleText(item) {
+      return isPronunciationException(item) ? "按读音例外" : "普通规则";
+    }
+
+    function roughSyllables(word) {
+      const text = comparable(word);
+      if (!text) return "-";
+      return text.split(" ").map(token => token.split("-").map(splitByClassroomRule).join("-/")).join(" ");
+    }
+
+    function splitByClassroomRule(token) {
+      const vowels = "aeiouy";
+      const consonantGroups = [
+        "sch", "scr", "shr", "spl", "spr", "squ", "str", "thr",
+        "bl", "br", "ch", "ck", "cl", "cr", "dr", "dw", "fl", "fr", "gh", "gl", "gr",
+        "kn", "ph", "pl", "pr", "qu", "sc", "sh", "sk", "sl", "sm", "sn", "sp", "st",
+        "sw", "th", "tr", "tw", "wh", "wr"
+      ];
+      let rest = token;
+      const parts = [];
+      const isVowel = ch => vowels.includes(ch);
+      while (rest) {
+        let vowelStart = -1;
+        let vowelEnd = -1;
+        for (let i = rest.length - 1; i >= 0; i -= 1) {
+          if (!isVowel(rest[i])) continue;
+          vowelStart = i;
+          vowelEnd = i + 1;
+          while (vowelStart > 0 && isVowel(rest[vowelStart - 1])) vowelStart -= 1;
+          break;
+        }
+        if (vowelStart < 0) {
+          if (parts.length) parts[0] = rest + parts[0];
+          else parts.unshift(rest);
+          break;
+        }
+        const prefix = rest.slice(0, vowelStart);
+        let consonant = "";
+        if (prefix && !isVowel(prefix[prefix.length - 1])) {
+          consonant = consonantGroups.find(group => prefix.endsWith(group)) || prefix[prefix.length - 1];
+        }
+        const start = vowelStart - consonant.length;
+        parts.unshift(rest.slice(start));
+        rest = rest.slice(0, start);
+      }
+      return parts.join("/");
+    }
+
+    function renderPractice(autoSpeak = false) {
+      clearAutoNext();
+      if (mode === "wrong" && !getPool().length) {
+        mode = "queue";
+        updateModeButtons();
+      }
+      const item = currentWord();
+      if (item) { trialFor(item); if (storageReadable) saveAll(); }
+      completedCurrent = false;
+      answerChecked = false;
+      els.answerInput.value = "";
+      els.feedback.className = "feedback";
+
+      if (!item) {
+        els.meaning.textContent = "请先添加或导入单词";
+        els.meaning.hidden = false;
+        els.phoneticTag.textContent = "音标：-";
+        els.syllableRuleTag.hidden = true;
+        els.levelTag.textContent = "分组：-";
+        els.wordShape.innerHTML = "";
+        els.learningPanel.hidden = true;
+        els.answerInput.hidden = false;
+        els.practiceActions.hidden = false;
+        els.feedback.textContent = selectedGroup === "all" ? "请进入词库管理添加单词。" : "这个分组里暂时没有可练习的单词。";
+        updateStats();
+        return;
+      }
+
+      els.meaning.textContent = item.meaning || "未填写中文提示";
+      els.phoneticTag.textContent = item.phonetic ? "音标：" + formatPhonetic(item.phonetic) : "本词资料未提供音标";
+      els.syllableRuleTag.hidden = false;
+      els.syllableRuleTag.textContent = syllableRuleText(item);
+      els.levelTag.textContent = "分组：" + (item.group || "留学预备");
+      const inLearningPreview = mode === "learn" && learningStep < 3;
+      els.meaning.hidden = inLearningPreview;
+      els.learningPanel.hidden = !inLearningPreview;
+      els.wordShape.hidden = inLearningPreview;
+      els.answerInput.hidden = inLearningPreview;
+      els.practiceActions.hidden = inLearningPreview;
+      els.feedback.hidden = inLearningPreview;
+      if (inLearningPreview) {
+        renderLearningStep(item);
+      } else {
+        els.meaning.hidden = false;
+        els.feedback.textContent = item.note ? "提示：" + item.note : "输入英文拼写后，点击“检查答案”再逐字母对照。";
+        renderLetters();
+      }
+      updateStats();
+      if (!inLearningPreview) setTimeout(() => els.answerInput.focus(), 40);
+      if (autoSpeak || (mode === "learn" && learningStep === 0)) setTimeout(speakCurrent, 180);
+    }
+
+    function renderLearningStep(item) {
+      const syllables = syllableGroupsFor(item, comparable(item.word)).join("/").replace(/\/ \//g, " ");
+      if (learningStep === 0) {
+        els.learningStep.textContent = "第 1 步：听音";
+        els.learningContent.textContent = "先听读音，跟读一遍。";
+        els.learningNextBtn.textContent = "我听到了";
+      } else if (learningStep === 1) {
+        els.learningStep.textContent = "第 2 步：看意思";
+        els.learningContent.textContent = item.meaning || "未填写中文提示";
+        els.learningNextBtn.textContent = "记住意思了";
+      } else {
+        els.learningStep.textContent = "第 3 步：看拼写（" + syllableRuleText(item) + "）";
+        els.learningContent.innerHTML = "<span class=\"learning-spelling\">" + escapeHtml(syllables) + "</span>";
+        els.learningNextBtn.textContent = "开始默写";
+      }
+    }
+
+    function advanceLearning() {
+      if (mode !== "learn") return;
+      learningStep = Math.min(learningStep + 1, 3);
+      renderPractice(learningStep === 0);
+    }
+
+    function formatPhonetic(value) {
+      const raw = String(value || "").trim();
+      if (!raw || raw === "-") return "-";
+      const pieces = raw
+        .replace(/^\s*\/|\/\s*$/g, "")
+        .split(/\s*\/\s*;?\s*\/\s*|\s*;\s*/)
+        .map(piece => toDjPhonetic(piece.replace(/^\/|\/$/g, "").trim()))
+        .filter(Boolean);
+      return pieces.length ? "/ " + pieces.join("; ") + " /" : raw;
+    }
+
+    function toDjPhonetic(value) {
+      return String(value || "")
+        .replace(/ɛ/g, "e")
+        .replace(/ʤ/g, "dʒ")
+        .replace(/ʧ/g, "tʃ");
+    }
+
+    function renderLetters(showResult = answerChecked) {
+      const item = currentWord();
+      const answer = item ? comparable(item.word) : "";
+      const typed = comparable(els.answerInput.value);
+      const typedLetters = typed.replace(/\s/g, "");
+      els.wordShape.innerHTML = "";
+      els.wordShape.classList.toggle("compare", showResult);
+      let typedPointer = 0;
+      let letterPointer = 0;
+
+      const groups = syllableGroupsFor(item, answer);
+      const annotations = showResult ? buildLetterAnnotations(item, answer, typed) : [];
+      const lastLetterGroupIndex = groups.map((group, index) => group === " " ? -1 : index).filter(index => index >= 0).pop();
+      groups.forEach((group, groupIndex) => {
+        const previousGroup = groups[groupIndex - 1];
+        if (groupIndex > 0 && group !== " " && previousGroup !== " ") {
+          const divider = document.createElement("span");
+          divider.className = "syllable-divider";
+          divider.textContent = "/";
+          els.wordShape.appendChild(divider);
+        }
+
+        if (group === " ") {
+          const space = document.createElement("div");
+          space.className = "letter-cell space";
+          els.wordShape.appendChild(space);
+          return;
+        }
+
+        const wrap = document.createElement("div");
+        wrap.className = showResult ? "syllable-pair" : "syllable-group";
+        const answerRow = document.createElement("div");
+        answerRow.className = "syllable-row";
+        const typedRow = document.createElement("div");
+        typedRow.className = "syllable-row";
+        const annotationRows = [];
+        const groupStart = letterPointer;
+        const typedCells = showResult ? typedRow : wrap;
+        for (let i = 0; i < group.length; i += 1) {
+          const expected = group[i];
+          if (showResult) {
+            const answerCell = document.createElement("div");
+            answerCell.className = "letter-cell answer";
+            answerCell.textContent = expected;
+            answerRow.appendChild(answerCell);
+          }
+          const cell = document.createElement("div");
+          cell.className = "letter-cell pending";
+          const actual = typedLetters[typedPointer] || "";
+          if (actual) {
+            cell.textContent = actual;
+            if (showResult) cell.classList.add(actual === expected ? "good" : "bad");
+          } else {
+            cell.textContent = "·";
+            if (!showResult && typedPointer === typedLetters.length) cell.classList.add("next");
+          }
+          typedPointer += 1;
+          letterPointer += 1;
+          typedCells.appendChild(cell);
+        }
+        if (showResult) {
+          const groupAnnotations = annotations.filter(note => note.index >= groupStart && note.index < groupStart + group.length);
+          groupAnnotations.forEach((note, noteRowIndex) => {
+            const row = document.createElement("div");
+            row.className = "annotation-row";
+            row.style.gridTemplateColumns = `repeat(${group.length}, var(--letter-cell-width))`;
+            const label = document.createElement("div");
+            label.className = "letter-note";
+            label.style.gridColumn = String(note.index - groupStart + 1);
+            label.textContent = note.text;
+            row.appendChild(label);
+            annotationRows.push(row);
+          });
+        }
+        if (showResult && groupIndex === lastLetterGroupIndex) {
+          while (typedPointer < typedLetters.length) {
+            const answerCell = document.createElement("div");
+            answerCell.className = "letter-cell answer";
+            answerCell.textContent = "·";
+            answerRow.appendChild(answerCell);
+            const extraCell = document.createElement("div");
+            extraCell.className = "letter-cell bad extra";
+            extraCell.textContent = typedLetters[typedPointer];
+            typedRow.appendChild(extraCell);
+            typedPointer += 1;
+          }
+        }
+        if (showResult) {
+          wrap.appendChild(answerRow);
+          wrap.appendChild(typedRow);
+          annotationRows.forEach(row => wrap.appendChild(row));
+        }
+        els.wordShape.appendChild(wrap);
+      });
+    }
+
+    function syllableGroupsFor(item, answer) {
+      if (!item) return [];
+      const fallback = answer.split(" ").flatMap((word, index, arr) => index < arr.length - 1 ? [word, " "] : [word]);
+      // All word lists use the same classroom rule; valid supplied exceptions stay intact.
+      let source = String(item.syllables || "").toLowerCase().trim().replace(/\s+/g, " ");
+      if (!source.includes("/")) source = source.replace(/-/g, "/");
+      // Preserve real hyphens in compound words and recover malformed imported splits.
+      if (source.replace(/\//g, "") !== answer) source = roughSyllables(item.word);
+      if (!source || source === "-") return fallback;
+
+      const answerWords = answer.split(" ");
+      const syllableWords = source.split(/\s+/);
+      const groups = [];
+      for (let i = 0; i < answerWords.length; i += 1) {
+        const word = answerWords[i];
+        const pieces = (syllableWords[i] || word).split("/").filter(Boolean);
+        const joined = pieces.join("");
+        const safePieces = joined === word ? pieces : [word];
+        safePieces.forEach(piece => groups.push(piece));
+        if (i < answerWords.length - 1) groups.push(" ");
+      }
+      return groups;
+    }
+
+    function checkAnswer(auto) {
+      const item = currentWord();
+      if (!item) return;
+      const expected = comparable(item.word), typed = comparable(els.answerInput.value);
+      if (!typed) { els.feedback.textContent = "请先输入答案，本次不计分。"; return; }
+      const exact = typed === expected;
+      const trial = trialFor(item);
+      const independentRight = recordAttempt(item, exact);
+      answerChecked = true;
+      renderLetters(true);
+      completedCurrent = exact;
+      if (exact) {
+        els.feedback.className = "feedback good";
+        if (independentRight) {
+          removeWrong(item.id);
+          els.feedback.textContent = "独立拼写正确，已记录。稍后进入下一词。";
+        } else {
+          els.feedback.textContent = trial.assisted
+            ? "拼写正确。本题看过答案，记为辅助练习，不计独立正确率。"
+            : "已改对。本题按首次提交计分，之后会安排复习。";
+        }
+      } else {
+        // After feedback exposes spelling, subsequent retries cannot become scored answers.
+        trial.assisted = true;
+        metrics().streaks[item.id] = 0;
+        addWrong(item.id);
+        els.feedback.className = "feedback bad";
+        els.feedback.textContent = buildErrorMessage(item, expected, typed);
+      }
+      updateStats();
+      saveAll();
+      renderLists();
+      if (exact) scheduleAutoNext();
+    }
+
+    function buildErrorMessage(item, expected, typed) {
+      if (!typed) return "还没有输入。先试着按音节慢慢拼。";
+      const expectedLetters = expected.replace(/\s/g, "");
+      const typedLetters = typed.replace(/\s/g, "");
+      const max = Math.max(expectedLetters.length, typedLetters.length);
+      const errors = [];
+      for (let i = 0; i < max; i += 1) {
+        if ((expectedLetters[i] || "") !== (typedLetters[i] || "")) {
+          errors.push(i);
+        }
+      }
+      if (errors.length) {
+        const notes = buildLetterAnnotations(item, expected, typed);
+        const count = notes.length || errors.length;
+        return "发现 " + count + " 处需要注意。\n看上方红色字母下方的提示。\n\n这个词会在 " + REVIEW_GAP + " 题后自动复习。";
+      }
+      return "还差一点。请检查空格、连字符或结尾字母。";
+    }
+
+    function buildLetterAnnotations(item, expected, typed) {
+      if (!typed) return [];
+      const expectedLetters = expected.replace(/\s/g, "");
+      const typedLetters = typed.replace(/\s/g, "");
+      const max = Math.max(expectedLetters.length, typedLetters.length);
+      const errorIndexes = [];
+      for (let i = 0; i < max; i += 1) {
+        if ((expectedLetters[i] || "") !== (typedLetters[i] || "")) errorIndexes.push(i);
+      }
+      if (!errorIndexes.length) return [];
+
+      const groups = syllableGroupsFor(item, comparable(item.word)).filter(group => group !== " ");
+      const ranges = [];
+      let cursor = 0;
+      groups.forEach((syllable, groupIndex) => {
+        const nextCursor = cursor + syllable.length;
+        ranges.push({ groupIndex, syllable, start: cursor, end: nextCursor });
+        cursor = nextCursor;
+      });
+
+      const notes = [];
+      const seen = new Set();
+      errorIndexes.forEach(errorIndex => {
+        const range = ranges.find(item => errorIndex >= item.start && errorIndex < item.end);
+        if (!range) {
+          const key = "extra|" + errorIndex;
+          if (!seen.has(key)) {
+            seen.add(key);
+            notes.push({ index: Math.max(expectedLetters.length - 1, 0), text: "多写字母" });
+          }
+          return;
+        }
+        const localIndex = errorIndex - range.start;
+        const note = explainBriefRule(item, groups, range.groupIndex, localIndex);
+        const key = note.key || (range.groupIndex + "|" + localIndex + "|" + note.text);
+        if (seen.has(key)) return;
+        seen.add(key);
+        notes.push({ index: range.start + note.localIndex, text: note.text });
+      });
+      return notes;
+    }
+
+    function buildSyllableErrorMessage(item, expectedLetters, typedLetters, errorIndexes) {
+      const groups = syllableGroupsFor(item, comparable(item.word)).filter(group => group !== " ");
+      const ranges = [];
+      let cursor = 0;
+      for (let groupIndex = 0; groupIndex < groups.length; groupIndex += 1) {
+        const syllable = groups[groupIndex];
+        const nextCursor = cursor + syllable.length;
+        ranges.push({ groupIndex, syllable, start: cursor, end: nextCursor });
+        cursor = nextCursor;
+      }
+
+      const messages = errorIndexes.map((errorIndex, messageIndex) => {
+        const range = ranges.find(item => errorIndex >= item.start && errorIndex < item.end);
+        if (!range) {
+          return (messageIndex + 1) + ". 结尾部分有误：先按音节块拼完整，再检查有没有多写或漏写字母。";
+        }
+        const localIndex = errorIndex - range.start;
+        return (messageIndex + 1) + ". 第 " + (range.groupIndex + 1) + " 个音节 “" + range.syllable + "”：" + explainSyllableRule(item, groups, range.groupIndex, localIndex);
+      });
+      return "发现 " + errorIndexes.length + " 处错误：\n" + messages.join("\n\n") + "\n\n点击“重新拼写”马上再来一次。";
+    }
+
+    function explainBriefRule(item, groups, groupIndex, localIndex) {
+      const expectedSyllable = groups[groupIndex] || "";
+      const letter = expectedSyllable[localIndex] || "";
+      const spellingUnit = spellingUnitAt(item, expectedSyllable, localIndex);
+      if (spellingUnit) {
+        return {
+          localIndex: spellingUnit.start,
+          text: soundNote(spellingUnit.text, spellingUnit.sound, "读"),
+          key: groupIndex + "|unit|" + spellingUnit.start + "|" + spellingUnit.text
+        };
+      }
+      if (isSilentFinalE(item, groups, groupIndex, expectedSyllable, localIndex)) {
+        return { localIndex, text: "词尾e不读" };
+      }
+      if ("aeiouy".includes(letter)) {
+        return { localIndex, text: soundNote(letter, letterSound(item, groups, groupIndex, letter, expectedSyllable), "发") };
+      }
+      const consonantUnit = consonantUnitAt(expectedSyllable, localIndex);
+      if (consonantUnit) {
+        return {
+          localIndex: expectedSyllable.indexOf(consonantUnit, Math.max(localIndex - consonantUnit.length + 1, 0)),
+          text: soundNote(consonantUnit, consonantSound(item, consonantUnit, expectedSyllable, localIndex), "发"),
+          key: groupIndex + "|consonant|" + localIndex + "|" + consonantUnit
+        };
+      }
+      const vowel = vowelGroups(expectedSyllable)[0] || "";
+      if (vowel) return { localIndex, text: soundNote(vowel, vowelSound(item, groups, groupIndex, vowel, expectedSyllable), "发") };
+      return { localIndex, text: "固定拼写" };
+    }
+
+    function soundNote(spelling, sound, verb) {
+      const hints = {
+        "e": "诶", "ɪ": "衣(短)", "i": "衣", "iː": "衣", "æ": "哎", "ʌ": "啊", "ə": "呃",
+        "ɑ": "啊", "ɔ": "哦", "oʊ": "欧", "u": "乌", "ʊ": "乌(短)", "aɪ": "爱", "aʊ": "奥", "ɔɪ": "喔伊",
+        "ʃ": "什", "ʒ": "热", "tʃ": "吃", "dʒ": "知", "θ": "斯", "ð": "兹", "ŋ": "嗯",
+        "ʃən": "申", "ʒən": "珍", "ʃəl": "舍"
+      };
+      const hint = hints[sound] ? "（" + hints[sound] + "）" : "";
+      return spelling + verb + "/" + sound + "/" + hint;
+    }
+
+    function explainSyllableRule(item, groups, groupIndex, localIndex) {
+      const expectedSyllable = groups[groupIndex] || "";
+      const letter = expectedSyllable[localIndex] || "";
+      const spellingUnit = spellingUnitAt(item, expectedSyllable, localIndex);
+      if (spellingUnit) {
+        return "该音节中字母组合 " + spellingUnit.text + " 发 /" + spellingUnit.sound + "/ 的音。";
+      }
+      const vowel = vowelGroups(expectedSyllable).find(group => {
+        const start = expectedSyllable.indexOf(group);
+        return localIndex >= start && localIndex < start + group.length;
+      }) || vowelGroups(expectedSyllable)[0] || "";
+      if (isSilentFinalE(item, groups, groupIndex, expectedSyllable, localIndex)) {
+        return "词尾 e 不发音，但拼写要保留。";
+      }
+      if ("aeiouy".includes(letter)) {
+        return "该音节中字母 " + letter + " 发 /" + letterSound(item, groups, groupIndex, letter, expectedSyllable) + "/ 的音。";
+      }
+      const consonantUnit = consonantUnitAt(expectedSyllable, localIndex);
+      if (consonantUnit) {
+        return "该音节中辅音字母 " + consonantUnit + " 发 /" + consonantSound(item, consonantUnit, expectedSyllable, localIndex) + "/ 的音。";
+      }
+      if (vowel) {
+        return "该音节中字母 " + vowel + " 发 /" + vowelSound(item, groups, groupIndex, vowel, expectedSyllable) + "/ 的音，前面的辅音字母也要一起拼。";
+      }
+      return "该音节没有明显元音字母，要作为固定拼写块记住。";
+    }
+
+    function vowelGroups(text) {
+      return (text.match(/[aeiouy]+/g) || []);
+    }
+
+    function spellingUnitAt(item, syllable, localIndex) {
+      const units = ["tion", "sion", "cial", "tial"];
+      for (const unit of units) {
+        const start = syllable.indexOf(unit);
+        if (start < 0 || localIndex < start || localIndex >= start + unit.length) continue;
+        return { text: unit, sound: spellingUnitSound(item, unit), start };
+      }
+      return null;
+    }
+
+    function spellingUnitSound(item, unit) {
+      const word = comparable(item && item.word);
+      if (unit === "sion") {
+        const voiced = new Set(["revision", "vision"]);
+        return voiced.has(word) ? "ʒən" : "ʃən";
+      }
+      if (unit === "cial" || unit === "tial") return "ʃəl";
+      return "ʃən";
+    }
+
+    function isSilentFinalE(item, groups, groupIndex, syllable, localIndex) {
+      if (syllable[localIndex] !== "e" || localIndex !== syllable.length - 1) return false;
+      if (syllable.length > 1 && "aeiouy".includes(syllable[localIndex - 1] || "")) return false;
+      const word = comparable(item && item.word);
+      const exact = new Set([
+        "graduate|ate",
+        "appreciate|ate",
+        "adequate|te",
+        "dictate|te",
+        "illustrate|te",
+        "demonstrate|te",
+        "debate|te",
+        "donate|te",
+        "devote|te",
+        "remote|te",
+        "take place|ke",
+        "take for|ke",
+        "take off|ke",
+        "make a difference|ke",
+        "waste|ste",
+        "blame|me",
+        "grade|de",
+        "define|ne",
+        "outline|ne",
+        "isolate|te",
+        "replace|ce"
+      ]);
+      if (exact.has(word + "|" + syllable)) return true;
+      return false;
+    }
+
+    function letterSound(item, groups, groupIndex, letter, syllable) {
+      return vowelSound(item, groups, groupIndex, letter, syllable);
+    }
+
+    function consonantUnitAt(syllable, localIndex) {
+      const groups = ["tch", "dge", "ch", "sh", "th", "ph", "ck", "ng", "qu", "wh", "wr", "kn"];
+      for (const group of groups) {
+        const start = syllable.indexOf(group);
+        if (start >= 0 && localIndex >= start && localIndex < start + group.length) return group;
+      }
+      const letter = syllable[localIndex] || "";
+      return letter && !"aeiouy".includes(letter) ? letter : "";
+    }
+
+    function consonantSound(item, unit, syllable, localIndex) {
+      const next = syllable[localIndex + 1] || "";
+      const exact = exactConsonantSound(comparable(item && item.word), syllable, unit, localIndex);
+      if (exact) return exact;
+      const map = {
+        b: "b",
+        d: "d",
+        f: "f",
+        h: "h",
+        j: "dʒ",
+        k: "k",
+        l: "l",
+        m: "m",
+        n: "n",
+        p: "p",
+        q: "kw",
+        r: "r",
+        s: "s",
+        t: "t",
+        v: "v",
+        w: "w",
+        x: "ks",
+        z: "z",
+        ch: "tʃ",
+        sh: "ʃ",
+        th: "θ",
+        ph: "f",
+        ck: "k",
+        ng: "ŋ",
+        qu: "kw",
+        wh: "w",
+        wr: "r",
+        kn: "n",
+        tch: "tʃ",
+        dge: "dʒ"
+      };
+      if (unit === "c") return "eiy".includes(next) ? "s" : "k";
+      if (unit === "g") return "eiy".includes(next) ? "dʒ" : "g";
+      return map[unit] || unit;
+    }
+
+    function exactConsonantSound(word, syllable, unit, localIndex) {
+      const byPosition = {
+        "sales|les|s|2": "z",
+        "towards|wards|s|4": "z",
+        "versus|sus|s|2": "z"
+      };
+      const bySyllable = {
+        "opposite|si|s": "z",
+        "presentation|sen|s": "z",
+        "deserve|ser|s": "z",
+        "physical|si|s": "z",
+        "reserve|ser|s": "z",
+        "compromise|se|s": "z",
+        "business|si|s": "z",
+        "president|si|s": "z",
+        "result in|sult|s": "z",
+        "wisely|se|s": "z",
+        "surprised|sed|s": "z",
+        "criticism|cism|s": "z",
+        "revise|se|s": "z",
+        "reasonable|so|s": "z",
+        "closet|set|s": "z",
+        "exposition|si|s": "z",
+        "resolution|so|s": "z",
+        "amuse|se|s": "z",
+        "visa|sa|s": "z",
+        "preservation|ser|s": "z",
+        "resident|si|s": "z",
+        "preserve|ser|s": "z",
+        "organism|nism|s": "z",
+        "abuse|se|s": "z",
+        "visible|si|s": "z",
+        "revision|sion|s": "ʒ",
+        "vision|sion|s": "ʒ",
+        "visual|su|s": "ʒ",
+        "exist|xist|x": "gz",
+        "exhausted|ex|x": "gz"
+      };
+      return byPosition[[word, syllable, unit, localIndex].join("|")]
+        || bySyllable[[word, syllable, unit].join("|")]
+        || "";
+    }
+
+    function vowelSound(item, groups, groupIndex, vowel, syllable) {
+      const map = {
+        a: "æ",
+        e: "e",
+        i: "ɪ",
+        o: "ɑ",
+        u: "ʌ",
+        y: "ɪ",
+        ai: "eɪ",
+        ay: "eɪ",
+        ea: "iː",
+        ee: "iː",
+        oa: "oʊ",
+        oi: "ɔɪ",
+        oy: "ɔɪ",
+        ou: "aʊ",
+        ow: "aʊ",
+        oo: "uː"
+      };
+      const word = comparable(item && item.word);
+      const nextSyllable = groups[groupIndex + 1] || "";
+      const exact = exactVowelSound(word, syllable, vowel);
+      if (exact) return exact;
+      if (vowel === "a" && syllable.endsWith("a") && /^(tion|sion|cial|tial)$/.test(nextSyllable)) return "eɪ";
+      if (vowel === "u" && syllable.endsWith("u")) return "u";
+      if (vowel === "a" && syllable.endsWith("a")) return "ə";
+      if (vowel === "o" && syllable.endsWith("o")) return "oʊ";
+      if (vowel === "u" && /u[ae]/.test(syllable)) return "ju";
+      return map[vowel] || vowel;
+    }
+
+    function exactVowelSound(word, syllable, vowel) {
+      const overrides = {
+        "graduate|du|u": "u",
+        "graduate|ate|a": "eɪ",
+        "individual|du|u": "u",
+        "manual|nu|u": "ju",
+        "duty|du|u": "u",
+        "situation|tu|u": "u",
+        "visual|su|u": "u",
+        "fuel|fu|u": "ju",
+        "reintroduce|du|u": "u",
+        "procedure|du|u": "ə",
+        "insurance|su|u": "ʊ",
+        "rural|ru|u": "ʊ",
+        "curious|cu|u": "jʊ",
+        "cure|cu|u": "jʊ",
+        "community|mu|u": "ju",
+        "consumer|su|u": "u",
+        "solution|lu|u": "u",
+        "conclude|clu|u": "u",
+        "flu|flu|u": "u",
+        "abuse|bu|u": "ju",
+        "upload|u|u": "ə",
+        "accurate|cu|u": "jə",
+        "attitude|tu|u": "u",
+        "infrastructure|tu|u": "ə"
+      };
+      return overrides[[word, syllable, vowel].join("|")] || "";
+    }
+
+    function bumpWordStat(id, field) {
+      if (!state.wordStats[id]) state.wordStats[id] = { right: 0, wrong: 0 };
+      state.wordStats[id][field] += 1;
+    }
+
+    function addWrong(id) {
+      if (!state.wrongIds.includes(id)) state.wrongIds.push(id);
+      queueReview(id);
+    }
+
+    function recordInitialWrong(id) {
+      const item = words.find(word => word.id === id);
+      if (item) assistCurrent(item);
+      // Requesting help schedules revision, but is not an incorrect submitted answer.
+      return false;
+    }
+
+    function removeWrong(id) {
+      state.wrongIds = state.wrongIds.filter(itemId => itemId !== id);
+      removeFromReviewQueue(id);
+    }
+
+    function nextWord() {
+      clearAutoNext();
+      metrics().trial = null;
+      const wasReview = Boolean(activeReviewId);
+      activeReviewId = null;
+      const pool = getPool();
+      if (!pool.length) {
+        mode = "queue";
+        updateModeButtons();
+      }
+      if (mode === "random") {
+        // An inserted review must not skip the next word in the shuffled round.
+        if (!wasReview) {
+          currentIndex += 1;
+          if (currentIndex >= pool.length) startRandomRound(pool.length ? pool[pool.length - 1].id : null);
+        }
+      } else if (mode !== "reverse" || !wasReview) {
+        currentIndex += 1;
+      }
+      if (mode !== "wrong" && !wasReview) {
+        state.reviewProgress = (Number(state.reviewProgress) || 0) + 1;
+        activeReviewId = dueReviewId();
+      }
+      if (mode === "learn") learningStep = 0;
+      saveAll();
+      renderPractice(true);
+    }
+
+    function scheduleAutoNext() {
+      clearAutoNext();
+      autoNextTimer = setTimeout(() => {
+        autoNextTimer = null;
+        nextWord();
+      }, 1200);
+    }
+
+    function clearAutoNext() {
+      if (!autoNextTimer) return;
+      clearTimeout(autoNextTimer);
+      autoNextTimer = null;
+    }
+
+    function updateDailyReport() {
+      const ids = new Set(words.filter(w => selectedGroup === 'all' || w.group === selectedGroup).map(w => w.id));
+      const rows = metrics().events.filter(e => todayKey(new Date(e[1])) === todayKey() && ids.has(e[0]));
+      document.getElementById('dailyGroup').textContent = selectedGroup === 'all' ? '全部词表' : selectedGroup;
+      const reportRate = kind => { const subset = rows.filter(e => e[2] === kind); return subset.length ? subset.filter(e => e[3] === 1).length + '/' + subset.length + '（' + Math.round(subset.filter(e => e[3] === 1).length / subset.length * 100) + '%）' : '—'; };
+      document.getElementById('dailyDate').textContent = todayKey();
+      document.getElementById('dailyWords').textContent = new Set(rows.map(e => e[0])).size;
+      document.getElementById('dailyAttempts').textContent = rows.length;
+      document.getElementById('dailyFirst').textContent = reportRate('initial');
+      document.getElementById('dailyReview').textContent = reportRate('review');
+      document.getElementById('dailyAssisted').textContent = rows.filter(e => e[2] === 'assisted').length;
+    }
+    function updateStats() {
+      updateDailyReport();
+      const m = metrics();
+      state.wrongIds = Array.from(wrongIdSet());
+      state.reviewQueue = normalizeReviewQueue(state.reviewQueue).filter(entry => state.wrongIds.includes(entry.id));
+      state.wrongIds.forEach(id => queueReview(id));
+      const first = m.events.filter(e => e[2] === "initial");
+      const review = m.events.filter(e => e[2] === "review");
+      const rate = rows => rows.length ? Math.round(rows.filter(e => e[3] === 1).length / rows.length * 100) + "%" : "—";
+      const today = todayKey();
+      state.done = m.events.length;
+      state.attempts = first.length + review.length;
+      state.correct = first.concat(review).filter(e => e[3] === 1).length;
+      els.totalWords.textContent = words.length;
+      els.doneCount.textContent = m.events.filter(e => todayKey(new Date(e[1])) === today).length;
+      els.wrongCount.textContent = state.wrongIds.length;
+      els.rightRate.textContent = rate(first);
+      document.getElementById("reviewRate").textContent = rate(review);
+      document.getElementById("masteredCount").textContent = words.filter(w => (m.streaks[w.id] || 0) >= 3).length;
+
+    }
+
+    function resetStats() {
+      if (!confirm("计数清零会重置今日完成、首次与复习正确率、错词数量和每个单词的练习记录，但不会删除词库。继续吗？")) return;
+      state = {
+        done: 0,
+        attempts: 0,
+        correct: 0,
+        wrongIds: [],
+        wordStats: {},
+        scoreById: {},
+        today: normalizeTodayState(),
+        lastGroup: selectedGroup === "all" ? "" : selectedGroup,
+        reviewQueue: [],
+        reviewProgress: 0
+      };
+      saveAll();
+      answerChecked = false;
+      completedCurrent = false;
+      renderPractice();
+      renderLists();
+      updateStats();
+    }
+
+    function refreshTodayIfNeeded() {
+      const previousKey = state.today && state.today.key;
+      ensureTodayState();
+      if (state.today.key !== previousKey) {
+        saveAll();
+        updateStats();
+      }
+    }
+
+    function renderLists() {
+      const panel = document.querySelector(".library-panel");
+      if (!panel || !panel.classList.contains("open")) return;
+      const query = comparable(els.searchInput.value);
+      const visible = words.filter(item => {
+        const haystack = comparable([item.word, item.meaning, item.group, item.phonetic].join(" "));
+        return haystack.includes(query);
+      });
+
+      els.wordList.innerHTML = "";
+      if (!visible.length) {
+        els.wordList.innerHTML = '<div class="empty">没有找到匹配的单词。</div>';
+      } else {
+        visible.slice(0, 100).forEach(item => els.wordList.appendChild(wordItem(item, false)));
+        if (visible.length > 100) { const note = document.createElement("p"); note.textContent = "仅显示前 100 条，请搜索，或进入词库管理分页查看。"; els.wordList.appendChild(note); }
+      }
+
+      els.wrongList.innerHTML = "";
+      const wrongSet = wrongIdSet();
+      const wrongWords = words.filter(item => wrongSet.has(item.id));
+      if (!wrongWords.length) {
+        els.wrongList.innerHTML = '<div class="empty">复习队列是空的。答错的单词会在隔几题后自动出现。</div>';
+      } else {
+        wrongWords.forEach(item => els.wrongList.appendChild(wordItem(item, true)));
+      }
+    }
+
+    function wordItem(item, isWrongList) {
+      const wrap = document.createElement("div");
+      wrap.className = "item";
+      const stats = state.wordStats[item.id] || { right: 0, wrong: 0 };
+      wrap.innerHTML = `
+        <div class="item-head">
+          <strong>${escapeHtml(item.word)}</strong>
+          <div class="item-actions"></div>
+        </div>
+        <small>${escapeHtml(item.meaning || "-")}</small>
+        <small>${escapeHtml(formatPhonetic(item.phonetic))} · ${escapeHtml(item.syllables || roughSyllables(item.word))}</small>
+        <small>${escapeHtml(item.group || "留学预备")} · 对 ${stats.right || 0} 次 / 错 ${stats.wrong || 0} 次</small>
+      `;
+      const actions = wrap.querySelector(".item-actions");
+      const practice = document.createElement("button");
+      practice.className = "secondary";
+      practice.type = "button";
+      practice.textContent = "练";
+      practice.addEventListener("click", () => {
+        mode = isWrongList ? "wrong" : "queue";
+        updateModeButtons();
+        const pool = getPool();
+        currentIndex = Math.max(0, pool.findIndex(word => word.id === item.id));
+        renderPractice(true);
+      });
+      actions.appendChild(practice);
+
+      const remove = document.createElement("button");
+      remove.className = isWrongList ? "warning" : "danger";
+      remove.type = "button";
+      remove.textContent = isWrongList ? "移出" : "删";
+      remove.addEventListener("click", () => {
+        if (isWrongList) {
+          removeWrong(item.id);
+          // Removing a review item must not change historical answers.
+        } else {
+          words = words.filter(word => word.id !== item.id);
+          removeWrong(item.id);
+          delete state.wordStats[item.id];
+          if (state.scoreById) delete state.scoreById[item.id];
+        }
+        saveAll();
+        currentIndex = 0;
+        renderPractice();
+        renderLists();
+      });
+      actions.appendChild(remove);
+      return wrap;
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, ch => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[ch]));
+    }
+
+    function updateModeButtons() {
+      document.getElementById("modeQueue").classList.toggle("active", mode === "queue");
+      document.getElementById("modeReverse").classList.toggle("active", mode === "reverse");
+      document.getElementById("modeWrong").classList.toggle("active", mode === "wrong");
+      document.getElementById("modeRandom").classList.toggle("active", mode === "random");
+      document.getElementById("modeLearn").classList.toggle("active", mode === "learn");
+    }
+
+    function showLibraryTab(tab) {
+      const panel = document.querySelector(".library-panel");
+      if (panel) panel.classList.add("open");
+      document.querySelectorAll(".tabBtn").forEach(btn => btn.classList.toggle("active", btn.dataset.tab === tab));
+      document.querySelectorAll(".tab-page").forEach(page => page.classList.toggle("active", page.id === tab + "Tab"));
+      renderLists();
+      if (panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+      activeReviewId = null;
+      if (mode === "learn") learningStep = 0;
+      updateModeButtons();
+      if (mode === "random") {
+        startRandomRound();
+      } else {
+        currentIndex = 0;
+      }
+      renderPractice(true);
+    }
+
+    function speakCurrent() {
+      const item = currentWord();
+      if (!item || !("speechSynthesis" in window)) return;
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(item.speechText || item.word);
+      utter.lang = item.pronunciationLocale || "en-US";
+      utter.rate = .82;
+      window.speechSynthesis.speak(utter);
+    }
+
+    function exportWords() {
+      const payload = {
+        app: "单词拼写练习",
+        schemaVersion: 2,
+        kind: "backup",
+        exportedAt: new Date().toISOString(),
+        words,
+        state
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "单词拼写练习备份.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function parseImported(text, name) {
+      const data = window.VocabStore.parse(text, name);
+      data.words = data.words.map(item => ({
+        ...item,
+        syllables: syllableGroupsFor(item, comparable(item.word)).join("/").replace(/\/ \//g, " ")
+      }));
+      return data;
+    }
+
+    function importWords(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = parseImported(String(reader.result || ""), file.name.toLowerCase());
+          if (data.isBackup && !confirm("这是完整备份。恢复将替换当前词库和学习进度；建议先导出当前备份。继续吗？")) return;
+          const previousWords = words, previousState = state, previousGroup = selectedGroup;
+          const previousPosition = {currentIndex, mode, activeReviewId, learningStep};
+          words = data.isBackup ? data.words : window.VocabStore.merge(words, data.words);
+          if (data.isBackup && data.state) state = data.state;
+          selectedGroup = data.isBackup ? (state.lastGroup || 'all') : (data.words[0].group || '自建分组');
+          state = {...state, lastGroup: selectedGroup};
+          currentIndex = 0; activeReviewId = null; learningStep = 0;
+          if (data.isBackup) restorePracticePosition();
+          try { saveAll(); } catch (error) {
+            words = previousWords; state = previousState; selectedGroup = previousGroup;
+            ({currentIndex, mode, activeReviewId, learningStep} = previousPosition);
+            throw error;
+          }
+          renderGroupFilter(); updateModeButtons(); renderPractice(); renderLists();
+          alert((data.isBackup ? "已恢复备份：" : "已导入 / 更新：") + data.words.length + " 条词条。同词跨表及不同义项均按独立 ID 保留。");
+        } catch (error) { alert("导入未完成：" + error.message); }
+      };
+      reader.onerror = () => alert("无法读取文件，请重新选择本地词表文件。");
+      reader.readAsText(file, "utf-8");
+    }
+
+    document.getElementById("wordForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const item = cleanWord({
+        word: document.getElementById("wordInput").value,
+        meaning: document.getElementById("meaningInput").value,
+        phonetic: document.getElementById("phoneticInput").value,
+        syllables: document.getElementById("syllableInput").value,
+        group: document.getElementById("groupInput").value || "留学预备",
+        note: document.getElementById("noteInput").value
+      });
+      if (!item.word) return;
+      const existingIndex = words.findIndex(word => window.VocabStore.keyOf(word) === window.VocabStore.keyOf(item));
+      if (existingIndex >= 0) {
+        words[existingIndex] = { ...words[existingIndex], ...item, id: words[existingIndex].id };
+      } else {
+        words.push(item);
+      }
+      event.target.reset();
+      saveAll();
+      renderGroupFilter();
+      renderPractice(true);
+      renderLists();
+      document.querySelector('[data-tab="library"]').click();
+    });
+
+    document.getElementById("clearFormBtn").addEventListener("click", () => document.getElementById("wordForm").reset());
+    document.getElementById("checkBtn").addEventListener("click", () => checkAnswer(false));
+    els.learningNextBtn.addEventListener("click", advanceLearning);
+    document.getElementById("retryBtn").addEventListener("click", () => {
+      clearAutoNext();
+      els.answerInput.value = "";
+      answerChecked = false;
+      els.feedback.className = "feedback";
+      els.feedback.textContent = "重新拼写：先完整输入，再点击“检查答案”对照。";
+      renderLetters();
+      els.answerInput.focus();
+    });
+    document.getElementById("revealBtn").addEventListener("click", () => {
+      const item = currentWord();
+      if (!item) return;
+      addWrong(item.id);
+      recordInitialWrong(item.id);
+      els.answerInput.value = item.word;
+      answerChecked = true;
+      els.feedback.className = "feedback bad";
+      els.feedback.textContent = "答案是：" + item.word + "。这个词已加入错词本，建议马上点击“重新拼写”。";
+      renderLetters();
+      saveAll();
+      renderLists();
+      updateStats();
+    });
+    document.getElementById("markWrongBtn").addEventListener("click", () => {
+      const item = currentWord();
+      if (!item) return;
+      addWrong(item.id);
+      recordInitialWrong(item.id);
+      saveAll();
+      renderLists();
+      updateStats();
+      els.feedback.className = "feedback bad";
+      els.feedback.textContent = "已加入错词本。";
+    });
+    document.getElementById("nextBtn").addEventListener("click", nextWord);
+    document.getElementById("speakBtn").addEventListener("click", speakCurrent);
+    document.getElementById("wrongBookBtn").addEventListener("click", () => setMode("wrong"));
+    document.getElementById("resetStatsBtn").addEventListener("click", resetStats);
+    document.getElementById("modeQueue").addEventListener("click", () => setMode("queue"));
+    document.getElementById("modeReverse").addEventListener("click", () => setMode("reverse"));
+    document.getElementById("modeWrong").addEventListener("click", () => setMode("wrong"));
+    document.getElementById("modeRandom").addEventListener("click", () => setMode("random"));
+    document.getElementById("modeLearn").addEventListener("click", () => setMode("learn"));
+    els.groupFilter.addEventListener("change", () => {
+      selectedGroup = els.groupFilter.value;
+      state.lastGroup = selectedGroup === "all" ? "" : selectedGroup;
+      activeReviewId = null;
+      currentIndex = 0;
+      saveAll();
+      renderPractice(true);
+    });
+    document.getElementById("practiceWrongBtn").addEventListener("click", () => setMode("wrong"));
+    document.getElementById("clearWrongBtn").addEventListener("click", () => {
+      state.wrongIds = [];
+      state.reviewQueue = [];
+      // Keep all historical scores and answer events when clearing the review queue.
+      saveAll();
+      renderPractice();
+      renderLists();
+    });
+    document.getElementById("exportBtn").addEventListener("click", exportWords);
+    document.getElementById("importBtn").addEventListener("click", () => els.importFile.click());
+    els.importFile.addEventListener("change", event => {
+      importWords(event.target.files[0]);
+      event.target.value = "";
+    });
+    els.searchInput.addEventListener("input", renderLists);
+    els.answerInput.addEventListener("input", () => {
+      clearAutoNext();
+      answerChecked = false;
+      renderLetters();
+    });
+    els.answerInput.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        checkAnswer(false);
+      }
+    });
+
+    document.querySelectorAll(".tabBtn").forEach(btn => {
+      btn.addEventListener("click", () => showLibraryTab(btn.dataset.tab));
+    });
+
+    restorePracticePosition();
+    renderGroupFilter();
+    updateModeButtons();
+    renderPractice();
+    renderLists();
+    setInterval(refreshTodayIfNeeded, 60 * 1000);
+  </script>
+<script>
+document.getElementById('loadListBtn').addEventListener('click', () => els.importFile.click());
+const nameInput = document.getElementById('studentName');
+try { nameInput.value = localStorage.getItem('spelling_public_student_name') || ''; } catch(e) {}
+nameInput.addEventListener('input', () => { try { localStorage.setItem('spelling_public_student_name', nameInput.value); } catch(e) {} });
+document.getElementById('reportOpen').addEventListener('click', () => { updateDailyReport(); document.getElementById('dailyCard').scrollIntoView({behavior:'smooth'}); });
+</script></body>
+</html>
